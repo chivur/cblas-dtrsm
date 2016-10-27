@@ -1,0 +1,146 @@
+===========================================================
+<CCR>,<332CA>
+===========================================================
+					>>ASC<<
+					
+					
+				    -tema2-
+
+				  
+				 |CBLAS - DTRSM|
+
+===========================================================
+
+1. Implementare (generalitati)
+2. Discutie
+3. Probleme aparute
+4. Scripturi
+5. Arhiva si rulare
+6. End
+
+===========================================================
+*1. Implementare:
+*
+* Pentru aceasta tema am considerat cazul : 
+*
+* A * X = B , deci pentru apelul de cblas am folosit CblasLeft
+* A superior triunghiulara , CblasUpper
+* A si nu A**T , CblasNoTrans
+* CblasNonUnit
+*
+* Matricile A sunt generate astfel : pe (si deasupra) diagonalei principale
+* sunt unitati
+*
+* Matricile B sunt generate aleator , ( numere modulo 50 )
+*
+* Algoritmul pentru rezolvarea sistemului este cel prezentat in cursul
+* de Metode Numerice - in MATLAB - usor modificat . 
+*
+* Pentru a obtine graficele , rulez mai multe teste in care se genereaza
+* matricile random si scriu (cu append) timpii in fisiere corespunzand fiecarui 
+* caz : normal-nehalem , optimizat-nehalem , cblas-nehalem , [*]-opteron . 
+*
+* Avand toate aceste fisiere apelez script-ul pentru gnuplot, afisand
+* timpii si dimensiunea matricilor folosite - pentru toate cazurile.
+*
+* Am considerat ca diferentele sunt mai vizibile daca apar toate cazurile
+* in acelasi grafic .
+*
+===========================================================
+*2. Discutie:
+*
+*--Diferenta implementare "de mana" - implementare "optimizata" :
+*
+* Diferenta de timp in acest caz apare din cauza diferentei de accesare
+* a matricei(vectorului) . In implementarea "de mana" sunt necesare 
+* mai multe operatii de adunare si inmultire pentru a se calcula offset-ul
+* din cadrul vectorului. In cazul implementarii "optimizate" acest calcul
+* se face mai rapid("de mana") , cu ajutorul facilitatilor oferite de limbajul
+* C (incrementarea unui pointer de un anumit tip - double in cazul nostru - 
+* se face corespunzator ) . Astfel se renunta la overhead-ul de a calcula de fiecare
+* data offset-ul corespunzator elementului din vector. Avand in vedere natura problemei
+* (multe accesari pe vector) aceasta diferenta se transpune intr-o imbunatatire temporala
+* (evident - in favoarea implementarii "optimizate")
+*
+*--|
+*
+*
+*
+*--Diferenta implementare pe Nehalem si Opteron :
+*
+* Diferentele de timp in acest caz apar din cauza arhitecturilor diferite.
+* Mai exact, Intel Xeon Nehalem x5675 are (conform /proc/cpuinfo) 12MB cache
+* (sau 13.5 MB L2+L3 conform cpu-world) , in timp ce AMD Opteron 2435 are
+* 9MB L2+L3 conform cpu-world . Aceasta este o diferenta importanta avand in
+* vedere natura problemei - avem de facut multe accesari , majoritatea
+* consecutive - asadar o memorie cache mai mare duce la un numar mai redus de 
+* cache miss-uri (deci sporit de cache hit) , avand asadar o accesare mai rapida.
+* Aceasta diferenta reiese clar si din grafic , unde se poate observa ca toate variantele
+* (de mana , optimizat , blas) rulate pe Intel Xeon Nehalem scot un timp considerabil mai bun
+* (pentru varianta de mana si optimizat) sau putin mai bun (pentru varianta de blas, unde
+* diferentele sunt mici) fata de AMD Opteron .
+* O alta diferenta intre cele 2 arhitecturi il reprezinta frecventa la care ruleaza
+* procesoarele : Nehalem x5675 ruleaza la 3.5GHz(conform cpu-world; in /proc/cpuinfo apare
+* ca ar avea 1.6GHz) , in timp ce Opteron 2435 are 2.6 GHz.
+*
+*
+*--|
+===========================================================
+|3. Probleme aparute:
+| \____________________________________________________________________/|
+| 
+| Cele mai mari probleme au aparut la compilare(cu includerea bibliotecii de cblas),
+| si la rulare(pe cozile nehalem , respectiv opteron). 
+|
+| Inafara de aceste problem , alte probleme aparute au fost deja rezolvate pe forum
+| (ex. overflow pentru matrici de dimensiuni mari, etc).
+|
+| 
+| /____________________________________________________________________\|
+   
+===========================================================
+*__________<<_____*_____|_____*_____>>__________*
+===========================================================
+*4. Scripturi:
+*
+* >nehal.sh , opt.sh:
+* compileaza si ruleaza mai multe teste(pentru nehalem si opteron)
+*
+* >qsb.sh:
+* pune pe cozile nehalem.q si opteron.q scripturile pentru rulare
+*
+* >gplot.sh:
+* realizeaza plot-ul cu timpi/dimensiune pentru toate cazurile
+*
+* >cleanup.sh:
+* sterge diverse fisiere de care nu mai este nevoie
+*
+* >info.sh:
+* folosit pentru a aduna informatii referitoare la procesoare
+*
+===========================================================
+*5. Arhiva si rulare:
+*
+* Arhiva contine sursa (main.c) impreuna cu o suita de teste
+* (size*.txt) , scripturile mentionate mai sus si acest README.
+*
+* Pentru rulare se va executa scriptul qsb.sh :
+* [pas1] ./qsb.sh
+*
+* Apoi se va rula :
+* [pas2] watch qstat
+* si cand job-ul se va termina se poate rula
+*
+* [pas3] ./gplot.sh
+* care va afisa plot-ul obtinut cu gnuplot
+*
+* Pentru un grafic mai exact se pot modifica scripturile 
+* opt.sh si nehal.sh , iterand de data asta pana la 10
+* facand toate testele din suita. Momentan , pentru a respecta 
+* cerinta referitoare la timpul scurt de rulare a testelor am
+* ales sa rulez doar 5 teste din cele 10 disponibile.
+*
+*
+===========================================================
+                     <<END>>
+===========================================================
